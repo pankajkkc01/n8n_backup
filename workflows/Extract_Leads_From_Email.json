@@ -1,0 +1,968 @@
+{
+  "updatedAt": "2026-03-26T11:59:04.543Z",
+  "createdAt": "2026-03-26T11:59:04.543Z",
+  "id": "8hfRsnUAX0aQjpnJ",
+  "name": "Extract Leads From Email",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1584,
+        336
+      ],
+      "id": "8ff4b445-95da-466b-bcaa-64be4138da95",
+      "name": "Gmail Trigger"
+    },
+    {
+      "parameters": {
+        "inputText": "=Email Subject:  {{ $('emailVars').item.json.Subject }}\nEmail Body: {{ $('emailVars').item.json.Body }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "marketing",
+              "description": "a marketing email"
+            },
+            {
+              "category": "enquiry",
+              "description": "This is an enquiry mail for a product or service which the contact number of the lead listed in the email."
+            }
+          ]
+        },
+        "options": {
+          "fallback": "other"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        64
+      ],
+      "id": "fc7f98ed-8d71-4994-a102-bae879762027",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8888f1ae-d36f-4edd-81bb-048932edca23",
+              "leftValue": "={{ $('emailVars').item.json.From }}",
+              "rightValue": "skmr",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "8dc8a548-47ca-4837-a4b3-3ec463e7edc1",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -912,
+        80
+      ],
+      "id": "990b4b62-d145-49e4-a5dc-638d58e3b43c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        352
+      ],
+      "id": "496469a4-3ae2-488c-a8b0-92381aa66a16",
+      "name": "OpenRouter Chat Model"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2bc6d41d-e330-412f-a51c-f5ecb733fe87",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f2e75fa9-3a58-4ae3-ad2d-97cb2c3f107b",
+              "name": "threadId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "0647b970-704c-4279-8f78-4d80dfa7e9af",
+              "name": "Body",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "ff77ddc7-6fcf-46cd-9556-086392ed2190",
+              "name": "Subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "d5c4dd8f-06a2-42f1-a105-db2bb4bdc507",
+              "name": "internalDate",
+              "value": "={{ $json.internalDate }}",
+              "type": "string"
+            },
+            {
+              "id": "9728bf4b-172c-416e-af63-93ab128fc22f",
+              "name": "To",
+              "value": "={{ $json.To }}",
+              "type": "string"
+            },
+            {
+              "id": "b7c41beb-aa4d-4821-b985-7f8710847fae",
+              "name": "From",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1360,
+        336
+      ],
+      "id": "bac4a1ba-56d6-4e2b-8eb0-703e59b694a1",
+      "name": "emailVars"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "46df7ca6-8e21-4b6f-897f-172eb44ec690",
+              "name": "SPREADHSHEET_URL",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "93829b24-15b1-4e9f-8804-8fb3e4a96b9c",
+              "name": "SPREADSHEET_NAME",
+              "value": "Leads",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1136,
+        336
+      ],
+      "id": "4283d852-7dfd-44ff-bc05-a6177c1fac6f",
+      "name": "CONFIG"
+    },
+    {
+      "parameters": {
+        "text": "=Email Subject: {{ $('emailVars').item.json.Subject }}\nEmail Body: {{ $('emailVars').item.json.Body }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "name",
+              "description": "Name of the lead",
+              "required": true
+            },
+            {
+              "name": "phone_number",
+              "description": "phone number of the lead",
+              "required": true
+            },
+            {
+              "name": "email",
+              "description": "email of the lead",
+              "required": true
+            },
+            {
+              "name": "summary",
+              "description": "Summary of what the lead wants.",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        240
+      ],
+      "id": "7815b5e0-f4a4-4c15-85d5-07aa78e046b8",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-2",
+              "leftValue": "={{ $('CONFIG').item.json.SPREADHSHEET_URL }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4d9cdd75-3ad2-486d-bd25-9c3ba1de6d63",
+      "name": "Sheet Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        16,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "=Email Leads",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "Leads"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7b80d973-d93b-4d7a-9f75-e4c1b2373091",
+      "name": "Create Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create Sheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "aae05e44-9178-4ddf-b0c8-c7a71dc6c1e9",
+      "name": "Add Header Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('CONFIG').item.json.SPREADHSHEET_URL }}",
+          "__regex": "https:\\/\\/(?:drive|docs)\\.google\\.com(?:\\/.*|)\\/d\\/([0-9a-zA-Z\\-_]+)(?:\\/.*|)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Receive Time": "={{ \nDateTime.fromMillis(Number($('emailVars').item.json.internalDate)).toFormat('dd/MM/yyyy HH:mm:ss') \n}}",
+            "name": "={{ $json.output.name }}",
+            "phone_number": "={{ $json.output.phone_number }}",
+            "email": "={{ $json.output.email }}",
+            "summary": "={{ $json.output.summary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Receive Time",
+              "displayName": "Receive Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Respond Time",
+              "displayName": "Respond Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e1c13979-32ab-409c-81f4-8f80e04b393e",
+      "name": "Append Lead to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "01e32415-7183-4efd-9c73-9c02ba42436c",
+              "name": "Receive Time",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "267e51a2-36f5-4006-9e9b-287497411e3e",
+              "name": "name",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "fc7814d3-07b6-4503-a136-942eeee368e2",
+              "name": "phone_number",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "f67ec482-0b73-4ded-88cd-85007e1d97bf",
+              "name": "email",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "0ec75ef6-7420-47e9-880e-13032193351b",
+              "name": "summary",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "d8dbeafc-d0db-4518-8d77-cf4e2edb507b",
+              "name": "status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "2c3c362f-1f4f-442f-90ea-738fa1194950",
+              "name": "Respond Time",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        448
+      ],
+      "id": "0ca06acf-1bd4-4b7e-bca5-2fa94c4cb722",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create Sheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $('Information Extractor').item.json.output.name }}",
+            "phone_number": "={{ $('Information Extractor').item.json.output.phone_number }}",
+            "email": "={{ $('Information Extractor').item.json.output.email }}",
+            "summary": "={{ $('Information Extractor').item.json.output.summary }}",
+            "Receive Time": "={{ \nDateTime.fromMillis(Number($('emailVars').item.json.internalDate)).toFormat('dd/MM/yyyy HH:mm:ss') \n}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Receive Time",
+              "displayName": "Receive Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Respond Time",
+              "displayName": "Respond Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        448
+      ],
+      "id": "ff17e4f4-fde6-41be-a621-d762ccb46f61",
+      "name": "Append row in sheet"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('emailVars').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        224
+      ],
+      "id": "dbed83d0-48bb-406f-85b1-fc9a2749ab65",
+      "name": "Mark a message as read",
+      "webhookId": "0af254c8-1623-4399-9492-17b8e0898d0c"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('emailVars').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        448
+      ],
+      "id": "e9ce6fab-d61f-49fd-9745-90272c00cef9",
+      "name": "Mark a message as read1",
+      "webhookId": "52522f0f-8784-482f-81d7-a70b8104ed57"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('emailVars').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -768,
+        624
+      ],
+      "id": "24865945-c3b2-435f-ac55-7c9a6c839f08",
+      "name": "Mark a message as read2",
+      "webhookId": "d4d5c8ac-9cb2-43df-89ab-afba51a2d9d7"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('emailVars').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3f1321fb-b34f-4f99-adbe-b2266564b48b",
+      "name": "Mark a message as read3",
+      "webhookId": "68e1671a-d659-45b8-9ca7-7e24ec22294e"
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "emailVars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark a message as read2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "emailVars": {
+      "main": [
+        [
+          {
+            "node": "CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONFIG": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark a message as read3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Sheet Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet Exists?": {
+      "main": [
+        [
+          {
+            "node": "Append Lead to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Header Row": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Add Header Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Lead to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "79f7a8fc-524f-4920-8beb-c1db73395a19",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-26T11:59:04.546Z",
+      "createdAt": "2026-03-26T11:59:04.546Z",
+      "role": "workflow:owner",
+      "workflowId": "8hfRsnUAX0aQjpnJ",
+      "projectId": "tN59jkpluG3x53nn",
+      "project": {
+        "updatedAt": "2026-01-02T07:12:05.029Z",
+        "createdAt": "2026-01-02T07:09:02.964Z",
+        "id": "tN59jkpluG3x53nn",
+        "name": "pankaj sharma <pankaj@bcoachindia.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "be1011b7-4645-4dcc-a251-d2ae3419195b",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-01-02T07:09:02.964Z",
+            "createdAt": "2026-01-02T07:09:02.964Z",
+            "userId": "be1011b7-4645-4dcc-a251-d2ae3419195b",
+            "projectId": "tN59jkpluG3x53nn",
+            "user": {
+              "updatedAt": "2026-03-27T06:22:26.000Z",
+              "createdAt": "2026-01-02T07:09:02.521Z",
+              "id": "be1011b7-4645-4dcc-a251-d2ae3419195b",
+              "email": "pankaj@bcoachindia.com",
+              "firstName": "pankaj",
+              "lastName": "sharma",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-01-02T07:14:25.602Z",
+                "personalization_survey_n8n_version": "2.1.4",
+                "automationGoalDevops": [
+                  "other"
+                ],
+                "automationGoalDevopsOther": "workflow that are very repetitive",
+                "companySize": "20-99",
+                "companyType": "education",
+                "role": "engineering",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "tVi4wWJsAXRA9yYp",
+                "userActivatedAt": 1767350942042,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1767684095307
+                },
+                "easyAIWorkflowOnboarded": true,
+                "dismissedCallouts": {
+                  "aiAgentStarterCallout": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
