@@ -1,0 +1,1213 @@
+{
+  "updatedAt": "2026-03-24T10:33:56.304Z",
+  "createdAt": "2026-01-13T09:41:41.969Z",
+  "id": "kRXCNVXVgqIInHiP",
+  "name": "invoice_gen_Automation02",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "990c2af5-787d-4406-87d2-1f1c0a0e3604",
+      "name": "Google Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "google-sheets-trigger-auto-invoice",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "RJeF9kudtoKAPHiI",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "13374f9d-f5c6-4441-8b94-73c9c520251d",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "Manual",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "462ad2d1-d50c-4bc6-b90b-a75fbdfd9418",
+              "leftValue": "={{ $json.c_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "1c1d7e8b-75ec-43eb-872c-cc663b0d6f64",
+              "leftValue": "={{ $json.c_address }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "a162c3f9-872e-4fd4-a393-fefc25ce610b",
+              "leftValue": "={{ $json.c_uin }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "cdf3b500-0af4-441c-acb3-2a92819db848",
+              "leftValue": "={{ $json.batch }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "76d42016-79e1-4872-a88a-ed6be88cf786",
+              "leftValue": "={{ $json.email1 }}",
+              "rightValue": "pankaj@bcoachindia.com",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "86171646-f191-4d4b-bcdf-4f08da06d67a",
+              "leftValue": "={{ $json.invoice_link }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "30aa8823-34f1-4160-b2de-306138ef2fde",
+              "leftValue": "={{ $json.price }}",
+              "rightValue": null,
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "251c8419-c226-49d5-9ae3-c6f6af14943a",
+              "leftValue": "={{ $json.t_cost }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "94391e8d-9a6f-4594-93f1-933162fdefa2",
+      "name": "IF generate_invoice = Yes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "c_name",
+              "value": "={{$json[\"c_name\"]}}"
+            },
+            {
+              "name": "c_address",
+              "value": "={{$json[\"c_address\"]}}"
+            },
+            {
+              "name": "c_uin",
+              "value": "={{$json[\"c_uin\"]}}"
+            },
+            {
+              "name": "invoice_no",
+              "value": "={{$json[\"invoice_no\"]}}"
+            },
+            {
+              "name": "invoice_date",
+              "value": "={{ new Date(Math.round(($json[\"invoice_date\"] - 25569) * 86400 * 1000)).toISOString().split('T')[0] }}"
+            },
+            {
+              "name": "batch",
+              "value": "={{$json[\"batch\"]}}"
+            },
+            {
+              "name": "o_gst",
+              "value": "={{ new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number($json.o_gst)) + ' ₹' }}"
+            },
+            {
+              "name": "sumup",
+              "value": "={{ new Intl.NumberFormat('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number($json.sumup)) + \" ₹\" }}"
+            },
+            {
+              "name": "t_cost",
+              "value": "={{ $json.t_cost }}"
+            },
+            {
+              "name": "llp_es",
+              "value": "={{ $json.llp_es }}"
+            },
+            {
+              "name": "gstle",
+              "value": "={{ $json.gstle }}"
+            },
+            {
+              "name": "panle",
+              "value": "={{ $json.panle }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "price",
+              "value": "={{ new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number($json.price)) + ' ₹' }}"
+            },
+            {
+              "name": "d_gst",
+              "value": "={{ new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number($json.d_gst)) + ' ₹' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9a750ecf-e3fe-43c2-91b8-879500d32348",
+      "name": "Set Invoice Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        432,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/document/d/1IdP-zc0IPE4Bas_N46gdOoffLT-bxFdgkUhQWnAoYqY/edit?tab=t.0",
+          "mode": "url"
+        },
+        "options": {
+          "name": "={{\"Invoice_\" + $json[\"invoice_no\"] + \"_\" + $json[\"c_name\"]}}",
+          "parents": [
+            "=14BjdYJ0w1sm7lyiLdc2PXl_SEg7VVjcR"
+          ]
+        }
+      },
+      "id": "2aaf5359-55c6-4ba0-8fbf-b7d926f5e3f1",
+      "name": "Copy Invoice Template",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        624,
+        368
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gQ2tSNw5UALMvYgv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{$node[\"Copy Invoice Template\"].json.id}}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"requests\": [\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"invoice_no\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.invoice_no ? $('Set Invoice Fields').item.json.invoice_no.toString() : ''}}\"\n      }\n    },\n   {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"llp_es\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.llp_es ? $('Set Invoice Fields').item.json.llp_es.toString() : ''}}\"\n      }\n    },\n   {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"gstle\", \"matchCase\": false    },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.gstle ? $('Set Invoice Fields').item.json.gstle.toString() : ''}}\"\n      }\n    },\n   {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"panle\", \"matchCase\": false  },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.panle ? $('Set Invoice Fields').item.json.panle.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"invoice_date\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.invoice_date ? $('Set Invoice Fields').item.json.invoice_date.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"c_name\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.c_name ? $('Set Invoice Fields').item.json.c_name.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"c_address\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.c_address ? $('Set Invoice Fields').item.json.c_address.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"c_uin\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.c_uin ? $('Set Invoice Fields').item.json.c_uin.toString() : ''}}\"\n      }\n    },\n    \n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"batch\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.batch ? $('Set Invoice Fields').item.json.batch.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"price\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.price ? $('Set Invoice Fields').item.json.price.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"o_gst\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.o_gst ? $('Set Invoice Fields').item.json.o_gst.toString() : ''}}\"\n      }\n    },\n{\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"d_gst\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.d_gst ? $('Set Invoice Fields').item.json.d_gst.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"t_cost\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.t_cost ? $('Set Invoice Fields').item.json.t_cost.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"sumup\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.sumup ? $('Set Invoice Fields').item.json.sumup.toString() : ''}}\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "8e933b5e-2d02-4f13-ad53-74a76135ece3",
+      "name": "Replace Variables in Doc",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        800,
+        80
+      ],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "r79zwI3nHd0lVDjU",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $node[\"Copy Invoice Template\"].json.id }}\n",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "1b75ae15-3207-40b6-be4c-93d7ed699fdb",
+      "name": "Export as PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        960,
+        384
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gQ2tSNw5UALMvYgv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "binaryData": true,
+        "name": "={{ $('Copy Invoice Template').item.json.name }}",
+        "resolveData": true,
+        "parents": [
+          "14BjdYJ0w1sm7lyiLdc2PXl_SEg7VVjcR"
+        ],
+        "options": {}
+      },
+      "id": "99059a43-8fe5-4fd1-87ad-07ee7975dc9e",
+      "name": "Upload to Drive (Final)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        96
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gQ2tSNw5UALMvYgv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet4",
+          "mode": "name"
+        },
+        "columnToMatchOn": "invoice_no",
+        "valueToMatchOn": "={{ $node[\"Set Invoice Fields\"].json.invoice_no.toString().trim() }}",
+        "fieldsUi": {
+          "values": [
+            {
+              "column": "invoice_link",
+              "fieldValue": "={{ $node[\"Upload to Drive (Final)\"].json.webViewLink }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "839d2c35-1b35-44bd-a402-734a8d42c5e4",
+      "name": "Update Invoice_Link",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        1424,
+        432
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JV3qLVEtSehte22f",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Trigger').item.json.email1 }}",
+        "subject": "Tax Invoice",
+        "message": "=<div style=\"font-family: Arial, Helvetica, sans-serif; font-size: 14px; color:#000; line-height:1.6;\">\n  <p style=\"margin:0 0 14px 0;\">Dear Sir/Ma'am,</p>\n\n  <p style=\"margin:0 0 18px 0;\">\n    Please find attached the invoice corresponding to your recent payment.\n  </p>\n\n  <div style=\"margin:0 0 14px 0;\">\n    <div style=\"font-size:20px; font-weight:700; color:#0b2d5c;\">Accounts BCI</div>\n    <div style=\"font-weight:700; color:#0b2d5c;\">91-9990098820</div>\n    <div>\n      <a href=\"mailto:accounts@bcoachindia.com\" style=\"color:#1a73e8; text-decoration:underline;\">accounts@bcoachindia.com</a>\n    </div>\n  </div>\n\n  <hr style=\"border:none; border-top:1px solid #bdbdbd; margin:14px 0 18px 0;\">\n\n  <div style=\"margin:0;\">\n    <img\n      src=\"https://drive.google.com/uc?export=view&id=1N8QeNc6255JRN83hUODB0uJzrGI1F_JU\"\n      alt=\"Business Coaching India\"\n      width=\"700\"\n      style=\"display:block; max-width:100%; height:auto; border:0; outline:none; text-decoration:none;\"\n    >\n  </div>\n</div>\n",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "=data"
+              }
+            ]
+          },
+          "ccList": "no-reply@bcoachindia.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        464
+      ],
+      "id": "ae9ce0f5-8ac8-4685-89f2-27ab3dd58ffb",
+      "name": "Send a message",
+      "webhookId": "0ca725d1-f352-43cc-b3b8-359a2d807035",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rnedPG8EjvLnjoN1",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $node[\"Upload to Drive (Final)\"].json.id }}\n",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1616,
+        32
+      ],
+      "id": "b7d67416-35dd-4467-97b7-5d78a9c665e6",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gQ2tSNw5UALMvYgv",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "IF generate_invoice = Yes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF generate_invoice = Yes": {
+      "main": [
+        [
+          {
+            "node": "Set Invoice Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Invoice Fields": {
+      "main": [
+        [
+          {
+            "node": "Copy Invoice Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy Invoice Template": {
+      "main": [
+        [
+          {
+            "node": "Replace Variables in Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Variables in Doc": {
+      "main": [
+        [
+          {
+            "node": "Export as PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Export as PDF": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive (Final)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive (Final)": {
+      "main": [
+        [
+          {
+            "node": "Update Invoice_Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Invoice_Link": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": {
+    "node:Google Sheets Trigger": {
+      "documentId": "14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y",
+      "sheetId": 0,
+      "lastRevision": 94886,
+      "lastRevisionLink": "https://docs.google.com/spreadsheets/export?id=14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y&revision=94886&exportFormat=xlsx"
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "e8ec935a-4f04-4b1b-a4a4-1fb59f8806bd",
+  "activeVersionId": "e8ec935a-4f04-4b1b-a4a4-1fb59f8806bd",
+  "versionCounter": 2472,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-13T09:41:41.974Z",
+      "createdAt": "2026-01-13T09:41:41.974Z",
+      "role": "workflow:owner",
+      "workflowId": "kRXCNVXVgqIInHiP",
+      "projectId": "tN59jkpluG3x53nn",
+      "project": {
+        "updatedAt": "2026-01-02T07:12:05.029Z",
+        "createdAt": "2026-01-02T07:09:02.964Z",
+        "id": "tN59jkpluG3x53nn",
+        "name": "pankaj sharma <pankaj@bcoachindia.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "be1011b7-4645-4dcc-a251-d2ae3419195b",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-01-02T07:09:02.964Z",
+            "createdAt": "2026-01-02T07:09:02.964Z",
+            "userId": "be1011b7-4645-4dcc-a251-d2ae3419195b",
+            "projectId": "tN59jkpluG3x53nn",
+            "user": {
+              "updatedAt": "2026-03-27T06:22:26.000Z",
+              "createdAt": "2026-01-02T07:09:02.521Z",
+              "id": "be1011b7-4645-4dcc-a251-d2ae3419195b",
+              "email": "pankaj@bcoachindia.com",
+              "firstName": "pankaj",
+              "lastName": "sharma",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-01-02T07:14:25.602Z",
+                "personalization_survey_n8n_version": "2.1.4",
+                "automationGoalDevops": [
+                  "other"
+                ],
+                "automationGoalDevopsOther": "workflow that are very repetitive",
+                "companySize": "20-99",
+                "companyType": "education",
+                "role": "engineering",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "tVi4wWJsAXRA9yYp",
+                "userActivatedAt": 1767350942042,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1767684095307
+                },
+                "easyAIWorkflowOnboarded": true,
+                "dismissedCallouts": {
+                  "aiAgentStarterCallout": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-24T10:46:24.000Z",
+    "createdAt": "2026-03-24T10:33:56.305Z",
+    "versionId": "e8ec935a-4f04-4b1b-a4a4-1fb59f8806bd",
+    "workflowId": "kRXCNVXVgqIInHiP",
+    "nodes": [
+      {
+        "parameters": {
+          "pollTimes": {
+            "item": [
+              {
+                "mode": "everyMinute"
+              }
+            ]
+          },
+          "documentId": {
+            "__rl": true,
+            "value": "https://docs.google.com/spreadsheets/d/14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y/edit?gid=0#gid=0",
+            "mode": "url"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet4",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y/edit#gid=0"
+          },
+          "options": {}
+        },
+        "id": "990c2af5-787d-4406-87d2-1f1c0a0e3604",
+        "name": "Google Sheets Trigger",
+        "type": "n8n-nodes-base.googleSheetsTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "google-sheets-trigger-auto-invoice",
+        "credentials": {
+          "googleSheetsTriggerOAuth2Api": {
+            "id": "RJeF9kudtoKAPHiI",
+            "name": "Google Sheets Trigger account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "13374f9d-f5c6-4441-8b94-73c9c520251d",
+                "leftValue": "={{ $json.type }}",
+                "rightValue": "Manual",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              },
+              {
+                "id": "462ad2d1-d50c-4bc6-b90b-a75fbdfd9418",
+                "leftValue": "={{ $json.c_name }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "1c1d7e8b-75ec-43eb-872c-cc663b0d6f64",
+                "leftValue": "={{ $json.c_address }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "a162c3f9-872e-4fd4-a393-fefc25ce610b",
+                "leftValue": "={{ $json.c_uin }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "cdf3b500-0af4-441c-acb3-2a92819db848",
+                "leftValue": "={{ $json.batch }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "76d42016-79e1-4872-a88a-ed6be88cf786",
+                "leftValue": "={{ $json.email1 }}",
+                "rightValue": "pankaj@bcoachindia.com",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "86171646-f191-4d4b-bcdf-4f08da06d67a",
+                "leftValue": "={{ $json.invoice_link }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "30aa8823-34f1-4160-b2de-306138ef2fde",
+                "leftValue": "={{ $json.price }}",
+                "rightValue": null,
+                "operator": {
+                  "type": "number",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "251c8419-c226-49d5-9ae3-c6f6af14943a",
+                "leftValue": "={{ $json.t_cost }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "94391e8d-9a6f-4594-93f1-933162fdefa2",
+        "name": "IF generate_invoice = Yes",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          240,
+          384
+        ]
+      },
+      {
+        "parameters": {
+          "values": {
+            "string": [
+              {
+                "name": "c_name",
+                "value": "={{$json[\"c_name\"]}}"
+              },
+              {
+                "name": "c_address",
+                "value": "={{$json[\"c_address\"]}}"
+              },
+              {
+                "name": "c_uin",
+                "value": "={{$json[\"c_uin\"]}}"
+              },
+              {
+                "name": "invoice_no",
+                "value": "={{$json[\"invoice_no\"]}}"
+              },
+              {
+                "name": "invoice_date",
+                "value": "={{ new Date(Math.round(($json[\"invoice_date\"] - 25569) * 86400 * 1000)).toISOString().split('T')[0] }}"
+              },
+              {
+                "name": "batch",
+                "value": "={{$json[\"batch\"]}}"
+              },
+              {
+                "name": "o_gst",
+                "value": "={{ new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number($json.o_gst)) + ' ₹' }}"
+              },
+              {
+                "name": "sumup",
+                "value": "={{ new Intl.NumberFormat('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number($json.sumup)) + \" ₹\" }}"
+              },
+              {
+                "name": "t_cost",
+                "value": "={{ $json.t_cost }}"
+              },
+              {
+                "name": "llp_es",
+                "value": "={{ $json.llp_es }}"
+              },
+              {
+                "name": "gstle",
+                "value": "={{ $json.gstle }}"
+              },
+              {
+                "name": "panle",
+                "value": "={{ $json.panle }}"
+              }
+            ],
+            "number": [
+              {
+                "name": "price",
+                "value": "={{ new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number($json.price)) + ' ₹' }}"
+              },
+              {
+                "name": "d_gst",
+                "value": "={{ new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number($json.d_gst)) + ' ₹' }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "9a750ecf-e3fe-43c2-91b8-879500d32348",
+        "name": "Set Invoice Fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 2,
+        "position": [
+          432,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "copy",
+          "fileId": {
+            "__rl": true,
+            "value": "=https://docs.google.com/document/d/1IdP-zc0IPE4Bas_N46gdOoffLT-bxFdgkUhQWnAoYqY/edit?tab=t.0",
+            "mode": "url"
+          },
+          "options": {
+            "name": "={{\"Invoice_\" + $json[\"invoice_no\"] + \"_\" + $json[\"c_name\"]}}",
+            "parents": [
+              "=14BjdYJ0w1sm7lyiLdc2PXl_SEg7VVjcR"
+            ]
+          }
+        },
+        "id": "2aaf5359-55c6-4ba0-8fbf-b7d926f5e3f1",
+        "name": "Copy Invoice Template",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 2,
+        "position": [
+          624,
+          368
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "gQ2tSNw5UALMvYgv",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://docs.googleapis.com/v1/documents/{{$node[\"Copy Invoice Template\"].json.id}}:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleOAuth2Api",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"requests\": [\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"invoice_no\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.invoice_no ? $('Set Invoice Fields').item.json.invoice_no.toString() : ''}}\"\n      }\n    },\n   {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"llp_es\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.llp_es ? $('Set Invoice Fields').item.json.llp_es.toString() : ''}}\"\n      }\n    },\n   {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"gstle\", \"matchCase\": false    },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.gstle ? $('Set Invoice Fields').item.json.gstle.toString() : ''}}\"\n      }\n    },\n   {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"panle\", \"matchCase\": false  },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.panle ? $('Set Invoice Fields').item.json.panle.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"invoice_date\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.invoice_date ? $('Set Invoice Fields').item.json.invoice_date.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"c_name\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.c_name ? $('Set Invoice Fields').item.json.c_name.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"c_address\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.c_address ? $('Set Invoice Fields').item.json.c_address.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"c_uin\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.c_uin ? $('Set Invoice Fields').item.json.c_uin.toString() : ''}}\"\n      }\n    },\n    \n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"batch\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.batch ? $('Set Invoice Fields').item.json.batch.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"price\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.price ? $('Set Invoice Fields').item.json.price.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"o_gst\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.o_gst ? $('Set Invoice Fields').item.json.o_gst.toString() : ''}}\"\n      }\n    },\n{\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"d_gst\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.d_gst ? $('Set Invoice Fields').item.json.d_gst.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"t_cost\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.t_cost ? $('Set Invoice Fields').item.json.t_cost.toString() : ''}}\"\n      }\n    },\n    {\n      \"replaceAllText\": {\n        \"containsText\": { \"text\": \"sumup\", \"matchCase\": false },\n        \"replaceText\": \"{{$('Set Invoice Fields').item.json.sumup ? $('Set Invoice Fields').item.json.sumup.toString() : ''}}\"\n      }\n    }\n  ]\n}",
+          "options": {}
+        },
+        "id": "8e933b5e-2d02-4f13-ad53-74a76135ece3",
+        "name": "Replace Variables in Doc",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          800,
+          80
+        ],
+        "credentials": {
+          "googleOAuth2Api": {
+            "id": "r79zwI3nHd0lVDjU",
+            "name": "Google account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "download",
+          "fileId": {
+            "__rl": true,
+            "value": "={{ $node[\"Copy Invoice Template\"].json.id }}\n",
+            "mode": "id"
+          },
+          "options": {
+            "googleFileConversion": {
+              "conversion": {
+                "docsToFormat": "application/pdf"
+              }
+            }
+          }
+        },
+        "id": "1b75ae15-3207-40b6-be4c-93d7ed699fdb",
+        "name": "Export as PDF",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 2,
+        "position": [
+          960,
+          384
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "gQ2tSNw5UALMvYgv",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "binaryData": true,
+          "name": "={{ $('Copy Invoice Template').item.json.name }}",
+          "resolveData": true,
+          "parents": [
+            "14BjdYJ0w1sm7lyiLdc2PXl_SEg7VVjcR"
+          ],
+          "options": {}
+        },
+        "id": "99059a43-8fe5-4fd1-87ad-07ee7975dc9e",
+        "name": "Upload to Drive (Final)",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          96
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "gQ2tSNw5UALMvYgv",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "14v4woehMBh4BVvRmyGuN4CJ5MFXG7Jc3ZG6Rl3s7f3Y",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet4",
+            "mode": "name"
+          },
+          "columnToMatchOn": "invoice_no",
+          "valueToMatchOn": "={{ $node[\"Set Invoice Fields\"].json.invoice_no.toString().trim() }}",
+          "fieldsUi": {
+            "values": [
+              {
+                "column": "invoice_link",
+                "fieldValue": "={{ $node[\"Upload to Drive (Final)\"].json.webViewLink }}\n"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "839d2c35-1b35-44bd-a402-734a8d42c5e4",
+        "name": "Update Invoice_Link",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 3,
+        "position": [
+          1424,
+          432
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "JV3qLVEtSehte22f",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sendTo": "={{ $('Google Sheets Trigger').item.json.email1 }}",
+          "subject": "Tax Invoice",
+          "message": "=<div style=\"font-family: Arial, Helvetica, sans-serif; font-size: 14px; color:#000; line-height:1.6;\">\n  <p style=\"margin:0 0 14px 0;\">Dear Sir/Ma'am,</p>\n\n  <p style=\"margin:0 0 18px 0;\">\n    Please find attached the invoice corresponding to your recent payment.\n  </p>\n\n  <div style=\"margin:0 0 14px 0;\">\n    <div style=\"font-size:20px; font-weight:700; color:#0b2d5c;\">Accounts BCI</div>\n    <div style=\"font-weight:700; color:#0b2d5c;\">91-9990098820</div>\n    <div>\n      <a href=\"mailto:accounts@bcoachindia.com\" style=\"color:#1a73e8; text-decoration:underline;\">accounts@bcoachindia.com</a>\n    </div>\n  </div>\n\n  <hr style=\"border:none; border-top:1px solid #bdbdbd; margin:14px 0 18px 0;\">\n\n  <div style=\"margin:0;\">\n    <img\n      src=\"https://drive.google.com/uc?export=view&id=1N8QeNc6255JRN83hUODB0uJzrGI1F_JU\"\n      alt=\"Business Coaching India\"\n      width=\"700\"\n      style=\"display:block; max-width:100%; height:auto; border:0; outline:none; text-decoration:none;\"\n    >\n  </div>\n</div>\n",
+          "options": {
+            "attachmentsUi": {
+              "attachmentsBinary": [
+                {
+                  "property": "=data"
+                }
+              ]
+            },
+            "ccList": "no-reply@bcoachindia.com"
+          }
+        },
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          1840,
+          464
+        ],
+        "id": "ae9ce0f5-8ac8-4685-89f2-27ab3dd58ffb",
+        "name": "Send a message",
+        "webhookId": "0ca725d1-f352-43cc-b3b8-359a2d807035",
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "rnedPG8EjvLnjoN1",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "download",
+          "fileId": {
+            "__rl": true,
+            "value": "={{ $node[\"Upload to Drive (Final)\"].json.id }}\n",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          1616,
+          32
+        ],
+        "id": "b7d67416-35dd-4467-97b7-5d78a9c665e6",
+        "name": "Download file",
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "gQ2tSNw5UALMvYgv",
+            "name": "Google Drive account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Google Sheets Trigger": {
+        "main": [
+          [
+            {
+              "node": "IF generate_invoice = Yes",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF generate_invoice = Yes": {
+        "main": [
+          [
+            {
+              "node": "Set Invoice Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Invoice Fields": {
+        "main": [
+          [
+            {
+              "node": "Copy Invoice Template",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Copy Invoice Template": {
+        "main": [
+          [
+            {
+              "node": "Replace Variables in Doc",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Replace Variables in Doc": {
+        "main": [
+          [
+            {
+              "node": "Export as PDF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Export as PDF": {
+        "main": [
+          [
+            {
+              "node": "Upload to Drive (Final)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Drive (Final)": {
+        "main": [
+          [
+            {
+              "node": "Update Invoice_Link",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Invoice_Link": {
+        "main": [
+          [
+            {
+              "node": "Download file",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download file": {
+        "main": [
+          [
+            {
+              "node": "Send a message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "pankaj sharma",
+    "name": "Version e8ec935a",
+    "description": "",
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-24T10:46:23.063Z",
+        "id": 42,
+        "workflowId": "kRXCNVXVgqIInHiP",
+        "versionId": "e8ec935a-4f04-4b1b-a4a4-1fb59f8806bd",
+        "event": "activated",
+        "userId": "be1011b7-4645-4dcc-a251-d2ae3419195b"
+      }
+    ]
+  }
+}
