@@ -1,0 +1,498 @@
+{
+  "name": "Sales Call Transcription and Performance Analysis",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "50d1bdda-42f4-4194-973c-0bc8a630b387",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "spreadsheetId",
+              "value": "1BuI99h6fv0CxPz1Z7mZ22joGODKCjoX-5yyGW6GSXp8",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "sheetName",
+              "value": "Sheet1",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2a044152-5125-42ce-90fb-46748492b877",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1BuI99h6fv0CxPz1Z7mZ22joGODKCjoX-5yyGW6GSXp8/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "c594cbbf-fc96-4cfd-b214-e5cc100f3f45",
+      "name": "Read Call Records from Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d3b44ad6-1714-4d52-b420-deb5db68b741",
+      "name": "Process Each Call",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['Call Recording URL'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "efe15f10-440d-4399-b5b6-e2d4b34af9a4",
+      "name": "Download Call Recording",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/translations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9e865699-dae4-4de5-b17f-b0cfefb19645",
+      "name": "Transcribe Audio with OpenAI Whisper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a sales performance analyst. Analyze the provided sales call transcription and evaluate the sales person's performance.\n\nYour task is to:\n1. Review the call transcription carefully\n2. Rate the sales person's performance on a scale of 0-10 (0 = very bad, 10 = very good)\n3. Identify what the sales person did well\n4. Identify what went wrong or could be improved\n5. Provide specific, actionable improvement suggestions\n\nReturn your analysis in the exact JSON format specified by the output parser."
+        }
+      },
+      "id": "fbfd152c-c525-48c6-a2a5-a6ea85caa732",
+      "name": "Analyze Sales Performance",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "e75e7669-cdd0-4329-abee-b9434c5e5df9",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"performance_score\": {\n      \"type\": \"number\",\n      \"description\": \"Performance rating from 0-10\"\n    },\n    \"what_went_well\": {\n      \"type\": \"string\",\n      \"description\": \"What the sales person did well\"\n    },\n    \"what_went_wrong\": {\n      \"type\": \"string\",\n      \"description\": \"What went wrong or areas of concern\"\n    },\n    \"improvement_suggestions\": {\n      \"type\": \"string\",\n      \"description\": \"Specific suggestions for improvement\"\n    }\n  },\n  \"required\": [\"performance_score\", \"what_went_well\", \"what_went_wrong\", \"improvement_suggestions\"]\n}"
+      },
+      "id": "4c0387b0-d35c-4197-b571-f8e082bf1781",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "Call Detail",
+              "value": "={{ $('Process Each Call').item.json['Call Detail'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "Call Recording URL",
+              "value": "={{ $('Process Each Call').item.json['Call Recording URL'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "Call Transcription",
+              "value": "={{ $('Transcribe Audio with OpenAI Whisper').first().json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "Performance Score",
+              "value": "={{ $json.output.performance_score }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "What Went Well",
+              "value": "={{ $json.output.what_went_well }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "What Went Wrong",
+              "value": "={{ $json.output.what_went_wrong }}",
+              "type": "string"
+            },
+            {
+              "id": "id-7",
+              "name": "Improvement Suggestions",
+              "value": "={{ $json.output.improvement_suggestions }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "053e3be8-49a7-4206-b1ff-ee4a1f6877d8",
+      "name": "Prepare Update Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Workflow Configuration').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Workflow Configuration').first().json.sheetName }}"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Call Detail": "={{ $json['Call Detail'] }}",
+            "Call Transcription": "={{ $json['Call Transcription'] }}",
+            "Performance Score": "={{ $json['Performance Score'] }}",
+            "What Went Well": "={{ $json['What Went Well'] }}",
+            "What Went Wrong": "={{ $json['What Went Wrong'] }}",
+            "Improvement Suggestions": "={{ $json['Improvement Suggestions'] }}",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "Call Detail"
+          ],
+          "schema": [
+            {
+              "id": "Call Detail",
+              "displayName": "Call Detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Call Recording URL",
+              "displayName": "Call Recording URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Call Transcription",
+              "displayName": "Call Transcription",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Performance Score",
+              "displayName": "Performance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "What Went Well",
+              "displayName": "What Went Well",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "What Went Wrong",
+              "displayName": "What Went Wrong",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Improvement Suggestions",
+              "displayName": "Improvement Suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "98b73119-32bc-4edf-a5d9-9f7c51efc3c8",
+      "name": "Update Google Sheets with Results",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        128
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Read Call Records from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Call Records from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Process Each Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio with OpenAI Whisper": {
+      "main": [
+        [
+          {
+            "node": "Analyze Sales Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analyze Sales Performance",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analyze Sales Performance",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Sales Performance": {
+      "main": [
+        [
+          {
+            "node": "Prepare Update Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Update Data": {
+      "main": [
+        [
+          {
+            "node": "Update Google Sheets with Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Google Sheets with Results": {
+      "main": [
+        [
+          {
+            "node": "Process Each Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Each Call": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download Call Recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Call Recording": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio with OpenAI Whisper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "00e14e35-d2ce-4f0e-bbf5-3349d1e38217",
+  "meta": {
+    "instanceId": "8ead40f5f681ce1049f0c0d0343c188f7de29e59b423cd0abe71f495aaa5bf64"
+  },
+  "id": "HsSUSjj1OAM4reLq",
+  "tags": []
+}
