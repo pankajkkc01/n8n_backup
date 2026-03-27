@@ -1,0 +1,250 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "40970c68-3a59-406e-9164-d04cd6609850",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        848,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://n8n.srv1237534.hstgr.cloud/api/v1/workflows?limit=250",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-API-KEY",
+              "value": "USE_YOUR_N8N_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eb8d6cc9-c135-4ea8-9b12-068d3665777a",
+      "name": "Get All Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "cd2749f9-2ec1-4ac3-b264-06661fedebef",
+      "name": "Split Workflows",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://n8n.srv1237534.hstgr.cloud/api/v1/workflows/' + $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-API-KEY",
+              "value": "USE_YOUR_OWN_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ce81a571-a169-4e9e-b105-5bce43e4e38b",
+      "name": "Get Workflow Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Runs once for ALL items — builds array of {fileName, workflowName, content}\nconst workflowItems = $('Get Workflow Details').all();\nconst results = [];\n\nfor (let i = 0; i < workflowItems.length; i++) {\n  const wf = workflowItems[i].json;\n\n  const safeName = wf.name\n    .replace(/[\\/\\\\:*?\"<>|]/g, '-')\n    .replace(/\\s+/g, '_')\n    .trim();\n\n  const fileName = `${safeName}.json`;\n  const content = Buffer.from(JSON.stringify(wf, null, 2)).toString('base64');\n\n  results.push({\n    json: { fileName, workflowName: wf.name, workflowId: wf.id, content }\n  });\n}\n\nreturn results;"
+      },
+      "id": "9143dc8f-a004-4264-809d-198b3f89e867",
+      "name": "Prepare Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1728,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.github.com/repos/pankajkkc01/n8n_backup/contents/workflows/' + $json.fileName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer USE_YOUR_OWN_KEY_GITHUB"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0aa1d881-1d94-4be6-9ba1-21268fe08e4d",
+      "name": "Get File SHA from GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1952,
+        -256
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Runs once for ALL items — matches Prepare Payload items with SHA items by index\nconst preparedItems = $('Prepare Payload').all();\nconst shaItems = $('Get File SHA from GitHub').all();\n\nconst results = [];\n\nfor (let i = 0; i < preparedItems.length; i++) {\n  const prepared = preparedItems[i].json;\n  const shaResponse = shaItems[i] ? shaItems[i].json : {};\n  const sha = shaResponse.sha || null; // null if file doesn't exist yet (404)\n\n  const body = {\n    message: `Backup: ${prepared.workflowName}`,\n    content: prepared.content,\n    branch: 'main'\n  };\n\n  // Only add SHA if file already exists — GitHub requires it for updates\n  if (sha) {\n    body.sha = sha;\n  }\n\n  results.push({\n    json: {\n      fileName: prepared.fileName,\n      workflowName: prepared.workflowName,\n      body\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "0818293c-ffcb-4f79-af69-5eba91904596",
+      "name": "Build Commit Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://api.github.com/repos/pankajkkc01/n8n_backup/contents/workflows/' + $json.fileName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer USE_YOUR_OWN_KEY_GITHUB"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "0f90d3a7-14f8-46ef-a9b4-4ac09e575fc7",
+      "name": "Push to GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        -256
+      ],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Split Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Workflows": {
+      "main": [
+        [
+          {
+            "node": "Get Workflow Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workflow Details": {
+      "main": [
+        [
+          {
+            "node": "Prepare Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Payload": {
+      "main": [
+        [
+          {
+            "node": "Get File SHA from GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File SHA from GitHub": {
+      "main": [
+        [
+          {
+            "node": "Build Commit Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Commit Body": {
+      "main": [
+        [
+          {
+            "node": "Push to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8ead40f5f681ce1049f0c0d0343c188f7de29e59b423cd0abe71f495aaa5bf64"
+  }
+}
