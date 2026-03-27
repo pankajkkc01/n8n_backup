@@ -1,0 +1,350 @@
+{
+  "updatedAt": "2026-02-06T12:53:07.000Z",
+  "createdAt": "2026-01-24T06:31:10.992Z",
+  "id": "UzHNU8iJkR03YLpk",
+  "name": "Auto_invoice_gen&mailed_pushed to git hub",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        -80
+      ],
+      "id": "fa8a0d41-772b-4271-85b1-9e575d6812ea",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -192
+      ],
+      "id": "0d58d93d-80bd-4d74-a789-5c76f2271049",
+      "name": "Get many workflows",
+      "credentials": {
+        "n8nApi": {
+          "id": "WI2RZbLcYzhpF7Ah",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "173566c0-db6a-43d6-b054-0f617c1603f5",
+              "name": "folderName",
+              "value": "=Backup_{{$now.format('yyyy-MM-dd')}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -144
+      ],
+      "id": "ac719663-81fd-4a95-8785-a644b3d6003c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        272,
+        -192
+      ],
+      "id": "f579b4d7-fd7d-4e61-bcec-3a03ecf3fbdd",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        400,
+        224
+      ],
+      "id": "5865bfbb-9598-4ee9-8faa-71ab625dce8e"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54a39bc1-8258-410f-be73-e958d68a0119",
+              "name": "fileName",
+              "value": "={{ $json.name.replaceAll('&','_') + \".json\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a485d41b-4463-4173-b69c-5335652d7c2c",
+              "name": "workflowjson",
+              "value": "={{ JSON.stringify($json, null, 2) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        -128
+      ],
+      "id": "86dd2b28-be76-4a9a-b847-1f0f12e2f874",
+      "name": "prepare_file_content"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "workflowjson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        -192
+      ],
+      "id": "92eb8549-2e9e-4f81-aed3-9548db305af7",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "pankajkkc01",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "n8n_workflows_backup"
+        },
+        "filePath": "={{$('Edit Fields').item.json.folderName + \"/\" + $('prepare_file_content').item.json.fileName}}",
+        "binaryData": true,
+        "commitMessage": "={{$now.setZone('Asia/Kolkata').format('yyyy-MM-dd HH:mm')}} Backup completed"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        -48
+      ],
+      "id": "0ea2f36e-f8c2-4524-a112-e64a470015c8",
+      "name": "Create a file",
+      "webhookId": "6e92faa0-eb3f-4abe-8738-612079d8faa1",
+      "credentials": {
+        "githubApi": {
+          "id": "r3Gqs6MCTcOMk3FX",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/pankajkkc01/n8n_workflows_backup/contents/{{$('Edit Fields').item.json.folderName}}/{{$('prepare_file_content').item.json.fileName}}\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"={{$now.setZone('Asia/Kolkata').format('yyyy-MM-dd HH:mm')}} Backup completed\",\n  \"branch\": \"main\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        560,
+        -320
+      ],
+      "id": "d004a5bd-579b-45fe-b685-63e193cf7033",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "nTRqwPP3x3E38FYK",
+          "name": "Bearer Auth account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many workflows": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get many workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "prepare_file_content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        []
+      ]
+    },
+    "prepare_file_content": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Create a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "917c36fb-5744-4133-bb6d-99895460b55c",
+  "activeVersionId": null,
+  "versionCounter": 12,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-24T06:31:10.995Z",
+      "createdAt": "2026-01-24T06:31:10.995Z",
+      "role": "workflow:owner",
+      "workflowId": "UzHNU8iJkR03YLpk",
+      "projectId": "YI8g3BJfHG0UdqFt",
+      "project": {
+        "updatedAt": "2026-01-24T05:30:10.495Z",
+        "createdAt": "2026-01-24T05:05:31.554Z",
+        "id": "YI8g3BJfHG0UdqFt",
+        "name": "Pankaj Sharma <pankaj.exe9021@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "256c5203-4462-4051-8ec3-4b53bd0bcddc",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-01-24T05:05:31.557Z",
+            "createdAt": "2026-01-24T05:05:31.557Z",
+            "userId": "256c5203-4462-4051-8ec3-4b53bd0bcddc",
+            "projectId": "YI8g3BJfHG0UdqFt",
+            "user": {
+              "updatedAt": "2026-01-24T05:30:49.000Z",
+              "createdAt": "2026-01-24T05:05:31.547Z",
+              "id": "256c5203-4462-4051-8ec3-4b53bd0bcddc",
+              "email": "pankaj.exe9021@gmail.com",
+              "firstName": "Pankaj",
+              "lastName": "Sharma",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-01-24T05:30:49.636Z",
+                "personalization_survey_n8n_version": "2.1.4",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "data-science",
+                "reportedSource": "google"
+              },
+              "settings": null,
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-23",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
