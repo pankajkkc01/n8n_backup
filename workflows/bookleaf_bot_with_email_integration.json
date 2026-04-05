@@ -1,0 +1,633 @@
+{
+  "name": "bookleaf_bot_with_email_integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bookleaf-query",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2352,
+        464
+      ],
+      "id": "2ab85447-4c76-4d46-8d09-492a20287f1a",
+      "name": "Webhook",
+      "webhookId": "8f344722-bb8f-47cb-b148-93c7d44a1812"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a helpful assistant for BookLeaf Publishing.\n\nYour job is to:\n1. Understand the author's query\n2. Extract their email if mentioned\n3. Classify the intent into one of these categories:\n   - book_status\n   - royalty_status\n   - add_on_status\n   - submission_date\n   - general_question\n4. Return a confidence score (0-100)\n\nAlways respond in this exact JSON format:\n{\n  \"intent\": \"book_status\",\n  \"author_email\": \"sara@xyz.com\",\n  \"confidence\": 85,\n  \"original_query\": \"the user's original message\"\n}\n\nIf no email is found in the message, set author_email as null.\nIf confidence is below 80, still respond in the same format.\nNEVER wrap the JSON in markdown code blocks. Return raw JSON only."
+            },
+            {
+              "content": "={{ $json.body.message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1584,
+        272
+      ],
+      "id": "5c55d413-8ffb-47c3-ada1-92cc667181d3",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "UPPYC9Pukh7YNVlH",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst raw = item?.output?.[0]?.content?.[0]?.text;\n\nif (!raw) throw new Error('Path failed. Top-level keys: ' + JSON.stringify(Object.keys(item)));\n\nconst cleaned = raw.replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error('JSON parse failed. Raw was: ' + raw);\n}\n\nconst email = parsed.author_email ? parsed.author_email.trim().toLowerCase() : null;\n\nreturn {\n  intent: parsed.intent || 'general_question',\n  author_email: email,\n  confidence: Number(parsed.confidence) || 0,\n  original_query: parsed.original_query || ''\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1312,
+        288
+      ],
+      "id": "035666d2-fa6e-44e0-b7b1-c0d116ec40f2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5ff33e13-39b5-458f-9e65-18bcd3d2ceac",
+              "leftValue": "={{ $json.author_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1152,
+        240
+      ],
+      "id": "daaf5f6f-3146-46a3-808e-e1038f80c798",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"reply\": \"I'd love to help! Could you please share your registered email address so I can look up your details?\",\n  \"escalated\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -944,
+        400
+      ],
+      "id": "0c406eae-97e4-480b-8f64-603558dcc9d2",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "authors",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $json.author_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -944,
+        144
+      ],
+      "id": "c31d7f07-8873-40a6-ae48-dd45eaf2cc49",
+      "name": "Get many rows",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SeDi82WKwjEECW0W",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "29680004-cc67-4755-bb0b-95aa4c036271",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        144
+      ],
+      "id": "5888abb2-2e2c-491c-9c02-503b071cdf43",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"reply\": \"I couldn't find any record with that email address. Please check your email and try again, or contact us at info@bookleafpub.com for assistance.\",\n  \"escalated\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -528,
+        240
+      ],
+      "id": "8ebc58cb-b435-400f-827f-d2408e1bb66c",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a warm and helpful support assistant for BookLeaf Publishing.\n\nYou have access to the author's data. Use it to answer their query naturally and kindly.\n\nAuthor Data:\n- Name: {{ $('Get many rows').first().json.author_name }}\n- Book Title: {{ $('Get many rows').first().json.book_title }}\n- Submission Date: {{ $('Get many rows').first().json.final_submission_date }}\n- Book Live Date: {{ $('Get many rows').first().json.book_live_date }}\n- Royalty Status: {{ $('Get many rows').first().json.royalty_status }}\n- ISBN: {{ $('Get many rows').first().json.isbn }}\n- Add-on Services: {{ $('Get many rows').first().json.add_on_services }}\n\nRules:\n- Be warm and professional\n- Address the author by their first name\n- Answer only what they asked\n- If the answer is \"Not Live Yet\" be empathetic and reassuring\n- End with \"Feel free to ask if you have more questions!\""
+            },
+            {
+              "content": "={{ $('Code in JavaScript').first().json.original_query }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -528,
+        48
+      ],
+      "id": "58a2720f-1783-44b5-9a30-37cc74eb02e0",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "UPPYC9Pukh7YNVlH",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1d4d3e01-2119-4c5a-a2f2-2048b4d79e9c",
+              "leftValue": "={{ $('Code in JavaScript').first().json.confidence }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        48
+      ],
+      "id": "4a6a817e-d7a4-492c-9ad8-5dc343c05997",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"reply\": \"I'm not fully confident about your query. I've flagged this for our support team and they will get back to you within 24 hours at info@bookleafpub.com\",\n  \"escalated\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        256,
+        -64
+      ],
+      "id": "dcdd2c85-1974-4569-913d-ad9c8ab7b3ce",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=={{ JSON.stringify({ reply: $('Message a model1').first().json.output[0].content[0].text, escalated: false }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "=application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        192
+      ],
+      "id": "20643cd7-f775-4297-ae9e-324e33809a75",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "tableId": "query_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "author_email",
+              "fieldValue": "={{ $('Code in JavaScript').first().json.author_email }}"
+            },
+            {
+              "fieldId": "platform",
+              "fieldValue": "web"
+            },
+            {
+              "fieldId": "query",
+              "fieldValue": "={{ $('Code in JavaScript').first().json.original_query }}"
+            },
+            {
+              "fieldId": "response",
+              "fieldValue": "={{ $('Message a model1').first().json.message.content }}"
+            },
+            {
+              "fieldId": "confidence_score",
+              "fieldValue": "={{ $('Code in JavaScript').first().json.confidence }}"
+            },
+            {
+              "fieldId": "escalated",
+              "fieldValue": "=true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -48
+      ],
+      "id": "07fb32b3-f061-4cb3-aa76-6a97fd13e45e",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SeDi82WKwjEECW0W",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "query_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "author_email",
+              "fieldValue": "={{ $('Code in JavaScript').first().json.author_email }}"
+            },
+            {
+              "fieldId": "platform",
+              "fieldValue": "web"
+            },
+            {
+              "fieldId": "query",
+              "fieldValue": "={{ $('Code in JavaScript').first().json.original_query }}"
+            },
+            {
+              "fieldId": "response",
+              "fieldValue": "={{ $('Message a model1').first().json.message.content }}"
+            },
+            {
+              "fieldId": "confidence_score",
+              "fieldValue": "={{ $('Code in JavaScript').first().json.confidence }}"
+            },
+            {
+              "fieldId": "escalated",
+              "fieldValue": "=false"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        16,
+        144
+      ],
+      "id": "e05a8b4e-1de2-4bbe-92de-25e3b1d38cb6",
+      "name": "Create a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SeDi82WKwjEECW0W",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1904,
+        224
+      ],
+      "id": "930e2d44-9624-42ec-b51c-59556f8b4927",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2384,
+        160
+      ],
+      "id": "7097fa37-7841-4ec3-b25b-7085f498055e",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DzzOHKwkq08kGRrR",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $input.first().json;\n\nconst rawText = email.text \n  || email.snippet \n  || email.textPlain\n  || \"\";\n\nreturn {\n  body: {\n    message: rawText,\n    sender_email: email.from,\n    subject: email.subject,\n    thread_id: email.threadId,\n    channel: \"email\"\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2176,
+        160
+      ],
+      "id": "a4f2ab0d-2ed8-4bbc-8e07-f529bc19fb92",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "2fc8ba8e-3d1e-4412-bf19-0624df17adec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8ead40f5f681ce1049f0c0d0343c188f7de29e59b423cd0abe71f495aaa5bf64"
+  },
+  "id": "ZeODg652ttW4XrWH",
+  "tags": []
+}
