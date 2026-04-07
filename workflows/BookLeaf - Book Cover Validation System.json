@@ -1,0 +1,977 @@
+{
+  "name": "BookLeaf - Book Cover Validation System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1_fdLrECYK6-Gofk6nw8hfWToVFvR6vYL",
+          "mode": "list",
+          "cachedResultName": "bookleaf_cover_uploads",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1_fdLrECYK6-Gofk6nw8hfWToVFvR6vYL"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "dd8dfa58-0c1b-4c8f-b81b-3ea0b6a627e1",
+      "name": "Google Drive Trigger",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3104,
+        272
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gQ2tSNw5UALMvYgv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fileName = $input.first().json.name || '';\nconst match = fileName.match(/^(\\d{13})_text\\.(pdf|png)$/i);\n\nif (match) {\n  return [{\n    json: {\n      ...$input.first().json,\n      isbn: match[1],\n      extension: match[2].toLowerCase(),\n      isValid: true,\n      driveFileId: $input.first().json.id,\n      driveUrl: $input.first().json.webViewLink || $input.first().json.webContentLink || '',\n      mimeType: $input.first().json.mimeType || ''\n    }\n  }];\n} else {\n  return [{\n    json: {\n      ...$input.first().json,\n      isbn: null,\n      extension: null,\n      isValid: false,\n      driveFileId: $input.first().json.id,\n      driveUrl: '',\n      mimeType: ''\n    }\n  }];\n}"
+      },
+      "id": "bd517355-bb74-485c-905c-97695ad74a43",
+      "name": "Validate Filename",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2896,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.isbn }}",
+              "rightValue": true,
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "152f8073-7879-4624-bb2b-abd616bbaa05",
+      "name": "IF Valid Filename",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2720,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apppxscldYzx05hbj",
+          "mode": "list",
+          "cachedResultName": "Book Cover Validation",
+          "cachedResultUrl": "https://airtable.com/apppxscldYzx05hbj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblFvg6wWONP3gO0T",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/apppxscldYzx05hbj/tblFvg6wWONP3gO0T"
+        },
+        "filterByFormula": "={ISBN} = '{{ $json.isbn }}'",
+        "options": {}
+      },
+      "id": "5c97f3b7-e0dc-4c81-9528-31a6f429f40f",
+      "name": "Airtable Lookup",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        -2512,
+        -144
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "C6OZXG6wsf9mLund",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst prevData = $('Validate Filename').first().json;\nconst isbn = prevData.isbn;\nconst driveFileId = prevData.driveFileId;\nconst driveUrl = prevData.driveUrl;\nconst extension = prevData.extension;\n\nlet authorName = 'Author';\nlet authorEmail = '';\nlet revisionNumber = 1;\nlet airtableRecordId = null;\nlet isUpdate = false;\n\n// Check if Airtable returned a record\nif (items.length > 0 && items[0].json && items[0].json.id) {\n  const rec = items[0].json;\n  const fields = rec.fields || rec;\n  authorName = fields['Author name'] || 'Author';\n  authorEmail = fields['Author email'] || '';\n  revisionNumber = (parseInt(fields['Revision number']) || 0) + 1;\n  airtableRecordId = rec.id;\n  isUpdate = true;\n}\n\nreturn [{\n  json: {\n    isbn,\n    driveFileId,\n    driveUrl,\n    extension,\n    authorName,\n    authorEmail,\n    revisionNumber,\n    airtableRecordId,\n    isUpdate\n  }\n}];"
+      },
+      "id": "de53fd8b-2b1f-468a-b88a-d29867a8732b",
+      "name": "Set Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2336,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.driveUrl }}",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "id": "7935526a-8895-4b4f-8667-2b0ac0c1d002",
+      "name": "Download File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2080,
+        -192
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gQ2tSNw5UALMvYgv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prevMeta = $('Analyze image').first().json;\n\ntry {\n  const raw = $input.first().json;\n  let text = '';\n\n  // Handle multiple possible response structures\n  // Structure 1: simplified output (content array at top level)\n  if (raw.content && Array.isArray(raw.content)) {\n    text = raw.content\n      .filter(c => c.type === 'text' || c.type === 'output_text')\n      .map(c => c.text)\n      .join('');\n  }\n  // Structure 2: unsimplified OpenAI output (output array)\n  if (!text && raw.output && Array.isArray(raw.output)) {\n    for (const item of raw.output) {\n      if (item.content && Array.isArray(item.content)) {\n        text += item.content\n          .filter(c => c.type === 'output_text' || c.type === 'text')\n          .map(c => c.text)\n          .join('');\n      }\n      if (typeof item.text === 'string') {\n        text += item.text;\n      }\n    }\n  }\n  // Structure 3: direct text field\n  if (!text && typeof raw.text === 'string') {\n    text = raw.text;\n  }\n\n  // Aggressively strip markdown fences\n  text = text.replace(/^[\\s\\S]*?```json\\s*/i, '');\n  text = text.replace(/\\s*```[\\s\\S]*$/i, '');\n  text = text.trim();\n\n  if (!text) {\n    throw new Error('No text content found in AI response');\n  }\n\n  const analysis = JSON.parse(text);\n\n  return [{\n    json: {\n      parseError: false,\n      analysis,\n      isbn: prevMeta.isbn,\n      driveUrl: prevMeta.driveUrl,\n      authorName: prevMeta.authorName,\n      authorEmail: prevMeta.authorEmail,\n      revisionNumber: prevMeta.revisionNumber,\n      airtableRecordId: prevMeta.airtableRecordId,\n      isUpdate: prevMeta.isUpdate\n    }\n  }];\n} catch (err) {\n  return [{\n    json: {\n      parseError: true,\n      errorMessage: err.message,\n      isbn: prevMeta.isbn,\n      driveUrl: prevMeta.driveUrl,\n      authorName: prevMeta.authorName,\n      authorEmail: prevMeta.authorEmail,\n      revisionNumber: prevMeta.revisionNumber,\n      airtableRecordId: prevMeta.airtableRecordId,\n      isUpdate: prevMeta.isUpdate\n    }\n  }];\n}"
+      },
+      "id": "f71abc4d-1167-4af6-a013-2d3cdf06ad19",
+      "name": "Parse AI JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1648,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-parse",
+              "leftValue": "={{ $json.parseError }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8551651e-25f0-48ab-8f08-99817820ef82",
+      "name": "IF Parse OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst a = item.analysis;\n\n// Enforce status rules\nlet finalStatus = a.status;\nif (finalStatus !== 'PASS' && finalStatus !== 'REVIEW NEEDED') {\n  finalStatus = 'REVIEW NEEDED';\n}\nif (a.confidence_score < 90) {\n  finalStatus = 'REVIEW NEEDED';\n}\n\nconst now = new Date().toISOString();\n\nreturn [{\n  json: {\n    isbn: item.isbn,\n    driveUrl: item.driveUrl,\n    authorName: item.authorName,\n    authorEmail: item.authorEmail,\n    revisionNumber: item.revisionNumber,\n    airtableRecordId: item.airtableRecordId,\n    isUpdate: item.isUpdate,\n    finalStatus,\n    confidenceScore: a.confidence_score,\n    issueType: (a.issue_type || []).join(', '),\n    issueSeverity: a.issue_severity || 'none',\n    detectionTimestamp: now,\n    correctionInstructions: (a.correction_instructions || []).join('\\n'),\n    issueSummary: a.issue_summary || '',\n    issueMarkers: (a.issue_markers || []).join('\\n'),\n    manualReviewReason: a.manual_review_reason || '',\n    visualAnnotationsUrl: a.visual_annotations_url || null,\n    issueMarkersArray: a.issue_markers || [],\n    correctionInstructionsArray: a.correction_instructions || []\n  }\n}];"
+      },
+      "id": "38bd1798-5988-4908-8498-a0060b5e4de3",
+      "name": "Enforce Status Rules",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-update",
+              "leftValue": "={{ $json.confidenceScore }}",
+              "rightValue": true,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0d9cee47-7da6-4819-93e5-b094a904ba18",
+      "name": "IF Is Update",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apppxscldYzx05hbj",
+          "mode": "list",
+          "cachedResultName": "Book Cover Validation",
+          "cachedResultUrl": "https://airtable.com/apppxscldYzx05hbj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblFvg6wWONP3gO0T",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/apppxscldYzx05hbj/tblFvg6wWONP3gO0T"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Confidence score": "={{ $json.confidenceScore }}",
+            "Revision number": 0,
+            "ISBN": "={{ $('Set Metadata').item.json.isbn }}",
+            "Status": "={{ $json.finalStatus }}",
+            "Issue type": "={{ $json.issueType }}",
+            "Issue severity": "={{ $json.issueSeverity }}",
+            "Detection timestamp": "={{ $json.detectionTimestamp }}",
+            "Correction instructions": "={{ $json.correctionInstructions }}",
+            "Cover file url": "={{ $('Download File').item.json.driveUrl }}"
+          },
+          "matchingColumns": [
+            "ISBN"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ISBN",
+              "displayName": "ISBN",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Author name",
+              "displayName": "Author name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Author email",
+              "displayName": "Author email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confidence score",
+              "displayName": "Confidence score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue type",
+              "displayName": "Issue type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue severity",
+              "displayName": "Issue severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Detection timestamp",
+              "displayName": "Detection timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Correction instructions",
+              "displayName": "Correction instructions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cover file url",
+              "displayName": "Cover file url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Revision number",
+              "displayName": "Revision number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue summary",
+              "displayName": "Issue summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Issue markers",
+              "displayName": "Issue markers",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Manual review reason",
+              "displayName": "Manual review reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Visual annotations url",
+              "displayName": "Visual annotations url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f1a10438-a489-4482-818c-3bf8e9640581",
+      "name": "Airtable Update",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        -128
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "C6OZXG6wsf9mLund",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apppxscldYzx05hbj",
+          "mode": "list",
+          "cachedResultName": "Book Cover Validation",
+          "cachedResultUrl": "https://airtable.com/apppxscldYzx05hbj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblFvg6wWONP3gO0T",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/apppxscldYzx05hbj/tblFvg6wWONP3gO0T"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Confidence score": "={{ $json.confidenceScore }}",
+            "Revision number": 0,
+            "Status": "={{ $json.finalStatus }}",
+            "Issue type": "={{ $json.issueType }}",
+            "Issue severity": "={{ $json.issueSeverity }}",
+            "Detection timestamp": "={{ $json.detectionTimestamp }}",
+            "Correction instructions": "={{ $json.correctionInstructions }}",
+            "Issue summary": "={{ $json.issueSummary }}",
+            "Cover file url": "={{ $('Download File').item.json.driveUrl }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ISBN",
+              "displayName": "ISBN",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Author name",
+              "displayName": "Author name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Author email",
+              "displayName": "Author email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confidence score",
+              "displayName": "Confidence score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue type",
+              "displayName": "Issue type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue severity",
+              "displayName": "Issue severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Detection timestamp",
+              "displayName": "Detection timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Correction instructions",
+              "displayName": "Correction instructions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Cover file url",
+              "displayName": "Cover file url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Revision number",
+              "displayName": "Revision number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue summary",
+              "displayName": "Issue summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue markers",
+              "displayName": "Issue markers",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Manual review reason",
+              "displayName": "Manual review reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Visual annotations url",
+              "displayName": "Visual annotations url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "65509a13-be81-4a8a-8b53-4741e7d9cf99",
+      "name": "Airtable Create",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        400
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "C6OZXG6wsf9mLund",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const airtable = $input.first().json;\nconst fields = airtable.fields || airtable;\n\nconst supportContact = 'support@bookleaf.com';\nconst resubTimeline = '5 business days';\n\nconst isbn = fields['ISBN'] || '';\nconst authorName = fields['Author name'] || 'Author';\nconst authorEmail = fields['Author email'] || 'fallback@bookleaf.com';\nconst status = fields['Status'] || 'REVIEW NEEDED';\nconst issueSummary = fields['Issue summary'] || '';\nconst issueMarkers = fields['Issue markers'] || '';\nconst correctionInstructions = fields['Correction instructions'] || '';\n\nlet subject = '';\nlet html = '';\n\nif (status === 'PASS') {\n  subject = `Book Cover Validation Passed – ${isbn}`;\n  html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body style=\"font-family:Arial,sans-serif;line-height:1.6;color:#333;padding:20px;\">` +\n    `<p>Hi ${authorName},</p>` +\n    `<p>Thank you for submitting your book cover.</p>` +\n    `<p>We have completed the automated validation, and your cover has successfully passed all required checks.</p>` +\n    `<p><strong>Status: PASS</strong></p>` +\n    `<p>Checks completed successfully:</p>` +\n    `<ul>` +\n    `<li>✅ No text overlap detected in the reserved award badge zone</li>` +\n    `<li>✅ Author name placement appears compliant with the front-cover safe area</li>` +\n    `<li>✅ Text spacing appears acceptable within the cover margins</li>` +\n    `<li>✅ Cover quality appears clear and legible</li>` +\n    `</ul>` +\n    `<p>No changes are required at this stage. Your cover can now move forward in the workflow.</p>` +\n    `<p>If you have any questions, please reply to this email or contact ${supportContact}.</p>` +\n    `<p>Regards,<br/>BookLeaf Publishing Team</p>` +\n    `</body></html>`;\n} else {\n  subject = `Book Cover Review Needed – ${isbn}`;\n\n  const markersList = issueMarkers.split(/\\n/).filter(m => m.trim());\n  const instructionsList = correctionInstructions.split(/\\n/).filter(i => i.trim());\n\n  const markersHtml = markersList.length > 0\n    ? markersList.map(m => `<li>${m.trim()}</li>`).join('')\n    : '<li>Issue detected – see summary below</li>';\n\n  const instructionsHtml = instructionsList.length > 0\n    ? instructionsList.map(i => `<li>${i.trim()}</li>`).join('')\n    : '<li>Please review and correct the flagged issues</li>';\n\n  html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body style=\"font-family:Arial,sans-serif;line-height:1.6;color:#333;padding:20px;\">` +\n    `<p>Hi ${authorName},</p>` +\n    `<p>Thank you for submitting your book cover.</p>` +\n    `<p>We have completed the automated validation, and your current cover needs improvement before approval.</p>` +\n    `<p><strong>Status: REVIEW NEEDED</strong></p>` +\n    `<p><strong>Issues identified:</strong></p>` +\n    `<ul>${markersHtml}</ul>` +\n    `<p><strong>Please make the following corrections:</strong></p>` +\n    `<ul>${instructionsHtml}</ul>` +\n    `<p><strong>Summary:</strong><br/>${issueSummary}</p>` +\n    `<p>Please resubmit the revised cover within ${resubTimeline} so we can continue processing without delay.</p>` +\n    `<p>If you need any clarification, please reply to this email or contact ${supportContact}.</p>` +\n    `<p>Regards,<br/>BookLeaf Publishing Team</p>` +\n    `</body></html>`;\n}\n\nreturn [{\n  json: {\n    subject,\n    html,\n    toEmail: authorEmail\n  }\n}];"
+      },
+      "id": "70dc49f7-4a9e-4c62-8ac8-7821fbec5b1d",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "=You are an automated book cover validation assistant for BookLeaf Publishing.\n\nAnalyze the uploaded book cover image and return STRICT JSON ONLY.\nDo not return markdown.\nDo not return explanations outside JSON.\nDo not invent data.\nDo not invent URLs.\nDo not add fields beyond the required schema.\n\nBUSINESS GOAL\nYour main job is to detect whether any front-cover text overlaps or enters the reserved bottom badge zone for the \"Winner of 21st Century Emily Dickinson Award\" emblem.\n\nThis is the highest-priority validation rule.\n\nINPUT CONTEXT\n- The uploaded file may be:\n  - a front-cover-only image\n  - a full wrap cover showing back cover + spine + front cover\n- File types may come from PDF or PNG after preprocessing\n- If full wrap is shown, treat:\n  - left panel = back cover\n  - center narrow panel = spine\n  - right panel = front cover\n\nCOVER RULES\nFront cover size:\n- 5 x 8 inches\n\nSafe area rules:\n- 3 mm margin from left side\n- 3 mm margin from right side\n- 3 mm margin from top\n- bottom 9 mm of the front cover is reserved for the award emblem\n\nUse these proportional estimates when judging the image:\n- left safe margin = 2.36% of front-cover width\n- right safe margin = 2.36% of front-cover width\n- top safe margin = 1.48% of front-cover height\n- bottom reserved badge zone = 4.43% of front-cover height\n\nCRITICAL RULE\nThe bottom reserved badge zone is where the \"Winner of 21st Century Emily Dickinson Award\" emblem will be placed or already exists.\n\nIMPORTANT EXCEPTION: The award emblem text itself is EXPECTED to be in the badge zone. This includes any text that reads \"Winner of the 21st Century Emily Dickinson Award\" or similar award/emblem text, and any BookLeaf Publishing logo or branding text in that area. Do NOT flag the award emblem text or publisher branding as an overlap violation. These are intentional and correct.\n\nOnly flag it as a badge zone overlap issue if OTHER text (such as title, subtitle, author name, tagline, quote, endorsement, or decorative text) touches, enters, or overlaps the bottom reserved badge zone.\n\nSPATIAL GUIDANCE FOR BADGE ZONE\nThe badge zone is ONLY the very bottom strip of the front cover (bottom 4.43% of height, approximately 9mm).\n\nThe award emblem text \"Winner of 21st Century Emily Dickinson Award\" marks the top boundary of the badge zone. Use this as your reference line:\n- Any text that is visually ABOVE the award emblem line is NOT in the badge zone. It is safe.\n- Only text that is AT or BELOW the same vertical level as the award emblem text is in the badge zone.\n- Do NOT flag text as overlapping simply because it is in the lower half or lower third of the cover.\n- The author name is commonly placed in the lower portion of the front cover but above the award emblem. This is a normal, correct placement. Do not flag it.\n- When in doubt, measure visually: if there is clear vertical space between the text and the award emblem line, the text is safe and should PASS.\n\nIf the award emblem is not yet placed on the cover, estimate the badge zone as the bottom 4.43% of the front cover height. Only flag text that falls within that very bottom strip.\n\nTEXT TO CHECK\nCheck all readable front-cover text EXCEPT the award emblem and publisher branding, including:\n- title\n- subtitle\n- author name\n- tagline\n- quote\n- endorsement text\n- decorative text\n- any other visible readable text that is NOT the award emblem or publisher logo\n\nAUTHOR NAME LOGIC\nIdentify the probable author name using visual clues:\n- looks like a person's name\n- appears as a byline\n- often placed near title or lower front area\nThe author name is often placed in the lower portion of the front cover. This is normal. Only flag it if it actually enters the bottom 4.43% badge zone strip.\nIf uncertain, state that it is probable author-name text.\n\nQUALITY RULES\nAlso check:\n- author name safe-zone conflict (only if author name is actually inside the badge zone or margin areas)\n- text too close to left, right, or top safe margins\n- back cover text alignment issues if back cover is visible\n- blur, pixelation, low resolution, or illegible text\n\nSTATUS RULES\nAllowed status values are ONLY:\n- PASS\n- REVIEW NEEDED\n\nSet status = PASS only when ALL of these are true:\n- no issue detected\n- no non-emblem text overlapping the badge zone\n- no spacing violation\n- no back-cover alignment problem\n- text is clear and legible\n- confidence_score is 85 or higher\n\nSet status = REVIEW NEEDED if ANY of these are true:\n- any issue is detected\n- non-emblem text overlap is possible or likely\n- spacing is borderline or wrong\n- back-cover alignment looks off\n- image quality is too poor for reliable validation\n- confidence_score is below 85\n\nCONFIDENCE SCORE GUIDANCE\n- If all checks pass and the cover looks correct, use a confidence_score of 92 or higher.\n- Only use confidence_score below 90 if there is genuine ambiguity or a real quality issue.\n- Do not lower confidence_score simply because text exists in the lower half of the cover. That is normal.\n- A well-designed cover with author name above the award emblem and clear text should score 92-98.\n\nSEVERITY VALUES\nAllowed severity values:\n- none\n- minor\n- major\n- critical\n\nSeverity guidance:\n- critical = non-emblem text actually overlaps or enters the reserved badge zone\n- major = author name too close to badge zone (within approximately 2-3mm above the emblem line) or clear margin violation\n- minor = small spacing issue, borderline alignment issue, or genuine low-confidence review\n- none = no issue\n\nRETURN THIS JSON SCHEMA EXACTLY\n\n{\n  \"status\": \"PASS\",\n  \"confidence_score\": 95,\n  \"issue_type\": [],\n  \"issue_severity\": \"none\",\n  \"issue_summary\": \"Short single-sentence summary.\",\n  \"issue_markers\": [],\n  \"correction_instructions\": [],\n  \"manual_review_reason\": \"\",\n  \"visual_annotations_url\": null,\n  \"checks\": {\n    \"cover_type\": \"front_only\",\n    \"badge_zone_overlap\": {\n      \"result\": \"pass\",\n      \"severity\": \"none\",\n      \"confidence\": 95,\n      \"conflicting_text\": [],\n      \"evidence\": \"\"\n    },\n    \"author_name_safe_zone\": {\n      \"result\": \"pass\",\n      \"severity\": \"none\",\n      \"confidence\": 94,\n      \"probable_author_text\": \"\",\n      \"evidence\": \"\"\n    },\n    \"text_to_border_spacing\": {\n      \"result\": \"pass\",\n      \"severity\": \"none\",\n      \"confidence\": 93,\n      \"evidence\": \"\"\n    },\n    \"back_cover_alignment\": {\n      \"result\": \"not_visible\",\n      \"severity\": \"none\",\n      \"confidence\": 0,\n      \"evidence\": \"\"\n    },\n    \"resolution_and_clarity\": {\n      \"result\": \"pass\",\n      \"severity\": \"none\",\n      \"confidence\": 92,\n      \"evidence\": \"\"\n    }\n  }\n}\n\nALLOWED VALUES\nFor checks.cover_type:\n- front_only\n- full_wrap\n- unknown\n\nFor each check result:\n- pass\n- review_needed\n- not_visible\n\nAllowed issue_type values:\n- BADGE_ZONE_OVERLAP\n- AUTHOR_NAME_SAFE_ZONE_CONFLICT\n- BORDER_SPACING_VIOLATION\n- BACK_COVER_ALIGNMENT_ISSUE\n- LOW_RESOLUTION_OR_PIXELATION\n- LOW_CONFIDENCE_REVIEW\n\nISSUE MARKERS RULE\nReturn short email-ready markers such as:\n- \"❌ Overlapping text detected in reserved award badge zone\"\n- \"❌ Author name positioning conflicts with safe area\"\n- \"❌ Text too close to border safe margins\"\n- \"❌ Back cover text alignment issue detected\"\n- \"❌ Low resolution or unclear text\"\n- \"⚠️ Low confidence review recommended\"\n\nCORRECTION INSTRUCTIONS RULE\nReturn clear, practical, step-by-step actions.\nExamples:\n- \"Move all conflicting text upward so the bottom reserved badge zone remains fully clear.\"\n- \"Reposition the author name higher on the front cover.\"\n- \"Increase spacing from the left, right, or top safe margins.\"\n- \"Re-export the file at higher resolution so the text appears sharp and readable.\"\n\nIMPORTANT BEHAVIOR\n- Be conservative but practical.\n- Focus most on the bottom reserved badge zone.\n- ALWAYS ignore the award emblem text and publisher branding when checking for badge zone overlap. Only flag non-emblem, non-branding text.\n- The author name being in the lower portion of the cover is NORMAL. Only flag it if it actually enters the badge zone strip.\n- A cover where all text sits above the award emblem line is a PASS. Do not overthink it.\n- If uncertain about whether text truly enters the badge zone, lean toward PASS if there is visible space between the text and the emblem.\n- If image quality prevents reliable judgment, use REVIEW NEEDED.\n- Keep issue_summary concise.\n- JSON only.",
+        "inputType": "base64",
+        "simplify": false,
+        "options": {
+          "maxTokens": 8192
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1872,
+        256
+      ],
+      "id": "eeb226d3-efcb-45ff-add2-902e5159bb54",
+      "name": "Analyze image",
+      "credentials": {
+        "openAiApi": {
+          "id": "UPPYC9Pukh7YNVlH",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        192
+      ],
+      "id": "c83a1a43-79d4-4a5d-9578-eaf9c312fbfc",
+      "name": "Send a message",
+      "webhookId": "81b119e7-7ba0-457f-bd19-7219f93f1e50",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DzzOHKwkq08kGRrR",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "pankaj@bcoachindia.com",
+        "subject": "=⚠️ [BookLeaf Alert] Invalid File Upload – {{ $json.displayName }}",
+        "message": "=<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body style=\"font-family:Arial,sans-serif;line-height:1.6;color:#333;padding:20px;\"><h2 style=\"color:#d32f2f;\">⚠️ BookLeaf Cover Validation – Invalid File Upload Detected</h2><hr style=\"border:1px solid #ddd;\"><p><strong>Alert Type:</strong> Invalid Filename Format</p><p><strong>File Name:</strong> {{ $json.name }}</p><p><strong>Uploaded At:</strong> {{ $now.toISO() }}</p><p><strong>Expected Format:</strong> {13-digit ISBN}_text.pdf or {13-digit ISBN}_text.png</p><p><strong>Example:</strong> 9781234567890_text.png</p><hr style=\"border:1px solid #ddd;\"><p><strong>What went wrong:</strong></p><p>A file was uploaded to the BookLeaf cover validation folder that does not match the required naming convention. The ISBN could not be extracted.</p><p><strong>Action taken:</strong></p><ul><li>❌ Workflow stopped – no further processing</li><li>❌ No author notification sent</li><li>❌ No Airtable record created</li></ul><p><strong>Required action:</strong></p><ul><li>Check who uploaded the file</li><li>Rename the file using the correct format: <code>{13-digit ISBN}_text.png</code></li><li>Re-upload the corrected file to the Google Drive folder</li></ul><hr style=\"border:1px solid #ddd;\"><p style=\"color:#888;font-size:12px;\">This is an automated alert from the BookLeaf Cover Validation System. Do not reply to this email. Contact support@bookleaf.com for assistance.</p></body></html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -2544,
+        528
+      ],
+      "id": "c240733f-0ae2-4850-8c67-7f362835ed5b",
+      "name": "Send a message1",
+      "webhookId": "243999a9-f171-4b13-87bb-ae6bc8d2e0fd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DzzOHKwkq08kGRrR",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Filename",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Filename": {
+      "main": [
+        [
+          {
+            "node": "IF Valid Filename",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Valid Filename": {
+      "main": [
+        [
+          {
+            "node": "Airtable Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable Lookup": {
+      "main": [
+        [
+          {
+            "node": "Set Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Metadata": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI JSON": {
+      "main": [
+        [
+          {
+            "node": "IF Parse OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Parse OK": {
+      "main": [
+        [
+          {
+            "node": "Enforce Status Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enforce Status Rules": {
+      "main": [
+        [
+          {
+            "node": "IF Is Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Is Update": {
+      "main": [
+        [
+          {
+            "node": "Airtable Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Airtable Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable Update": {
+      "main": [
+        [
+          {
+            "node": "Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable Create": {
+      "main": [
+        [
+          {
+            "node": "Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Parse AI JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "444dc5fc-a1df-432b-876b-06691a0cf343",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8ead40f5f681ce1049f0c0d0343c188f7de29e59b423cd0abe71f495aaa5bf64"
+  },
+  "id": "5B9IhMf5JMQU7VhA",
+  "tags": []
+}
